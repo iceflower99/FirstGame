@@ -51,6 +51,8 @@
     <Compile Include="Controller\Program.cs" />
     <Compile Include="Controller\SpaceGame.cs" />
     <Compile Include="Veiw\Animation.cs" />
+    <Compile Include="Veiw\ParallaxingBackground.cs" />
+    <Compile Include="Model\Enemy.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Icon.png" />

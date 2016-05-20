@@ -76,6 +76,9 @@ namespace FirstGame.Veiw
 			private 	Rectangle destinationRect = new Rectangle();
 
 		// Width of a given frame
+	
+		private int frameWidth;
+
 		public int FrameWidth
 		{
 			get { return frameWidth; }
@@ -83,6 +86,8 @@ namespace FirstGame.Veiw
 		}
 
 		// Height of a given frame
+
+		private int frameHeight;
 		public int FrameHeight
 		{
 			get { return frameHeight;}
@@ -90,6 +95,7 @@ namespace FirstGame.Veiw
 		}
 
 		// The state of the Animation
+		private bool active;
 		public bool Active
 		{
 			get { return active; }
@@ -97,6 +103,7 @@ namespace FirstGame.Veiw
 		}
 
 		// Determines if the animation will keep playing or deactivate after one run
+		private bool looping; 
 		public bool Looping
 		{
 			get { return looping; }
