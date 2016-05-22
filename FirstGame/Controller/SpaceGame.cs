@@ -44,9 +44,10 @@ namespace FirstGame.Controller
         TimeSpan enemySpawnTime;
         TimeSpan previousSpawnTime;
 
-        // A random number generator
+        // A random number generator`
         Random random;
-        Texture2D projectileTexture;
+        Texture2D laserTexture;
+        Texture2D puppyTexture; 
         List<projectile> projectiles;
 
         // The rate of fire of the player laser
@@ -62,6 +63,10 @@ namespace FirstGame.Controller
 
         // The music played during gameplay
         Song gameplayMusic;
+        //Number that holds the player score
+        int score;
+        // The font used to display UI elements
+        SpriteFont font;
         public SpaceGame ()
 		{
 			graphics = new GraphicsDeviceManager (this);
@@ -99,6 +104,8 @@ namespace FirstGame.Controller
             // Set the laser to fire every quarter second
             fireTime = TimeSpan.FromSeconds(.15f);
             explosions = new List<Animation>();
+            //Set player's score to zero
+            score = 0;
             base.Initialize ();
 		}
 
@@ -126,10 +133,12 @@ namespace FirstGame.Controller
             // Load the laser and explosion sound effect
             laserSound = Content.Load<SoundEffect>("Sound/laserFire");
             explosionSound = Content.Load<SoundEffect>("Sound/explosion");
-
+            // Load the score font
+            font = Content.Load<SpriteFont>("font/gameFont");
             // Start the music right away
             PlayMusic(gameplayMusic);
-            projectileTexture = Content.Load<Texture2D>("Texture/laser");
+            laserTexture = Content.Load<Texture2D>("Texture/laser");
+            puppyTexture= Content.Load<Texture2D>("Texture/puppy");
             mainBackground = Content.Load<Texture2D>("Texture/mainbackground");
             Vector2 playerPosition = new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
             player.Initialize(playerAnimation, playerPosition);
@@ -203,11 +212,17 @@ namespace FirstGame.Controller
             // Make sure that the player does not go out of bounds
             player.Position.X = MathHelper.Clamp(player.Position.X, 0, GraphicsDevice.Viewport.Width - player.Width);
             player.Position.Y = MathHelper.Clamp(player.Position.Y, 0, GraphicsDevice.Viewport.Height - player.Height);
+            // reset score if player health goes to zero
+            if (player.Health <= 0)
+            {
+                player.Health = 100;
+                score = 0;
+            }
         }
         private void AddProjectile(Vector2 position)
         {
             projectile projectile = new projectile();
-            projectile.Initialize(GraphicsDevice.Viewport, projectileTexture, position);
+            projectile.Initialize(GraphicsDevice.Viewport, laserTexture, position);
             projectiles.Add(projectile);
         }
         private void UpdateProjectiles()
@@ -342,6 +357,8 @@ namespace FirstGame.Controller
                         AddExplosion(enemies[i].Position);
                         // Play the explosion sound
                         explosionSound.Play();
+                        //Add to the player's score
+                        score += enemies[i].Value;
                     }
                     enemies.RemoveAt(i);
                 }
@@ -416,6 +433,10 @@ namespace FirstGame.Controller
             {
                 explosions[i].Draw(spriteBatch);
             }
+            // Draw the score
+            spriteBatch.DrawString(font, "score: " + score, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y), Color.White);
+            // Draw the player health
+            spriteBatch.DrawString(font, "health: " + player.Health, new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + 30), Color.White);
             // Stop drawing
             spriteBatch.End();
 			base.Draw (gameTime);
