@@ -47,19 +47,27 @@ namespace FirstGame.Controller
         // A random number generator`
         Random random;
         Texture2D laserTexture;
-        Texture2D puppyTexture; 
+        Texture2D puppyTexture;
+        Texture2D freezeLazer;
         List<projectile> projectiles;
 
         // The rate of fire of the player laser
         TimeSpan fireTime;
+        TimeSpan puppyTime;
+        TimeSpan rayTime;
         TimeSpan previousFireTime;
         Texture2D explosionTexture;
         List<Animation> explosions;
          // The sound that is played when a laser is fired
         SoundEffect laserSound;
 
+        // The sound that is played when a puupy is fired
+        SoundEffect puppyBark;
         // The sound used when the player or an enemy dies
         SoundEffect explosionSound;
+
+        // The sound used when the freeze ray is fired
+        SoundEffect freezeFire;
 
         // The music played during gameplay
         Song gameplayMusic;
@@ -67,6 +75,14 @@ namespace FirstGame.Controller
         int score;
         // The font used to display UI elements
         SpriteFont font;
+        enum projectileType
+        {
+            Laser,
+            Puppy,
+            Freezeray
+        }
+        projectileType projType;
+
         public SpaceGame ()
 		{
 			graphics = new GraphicsDeviceManager (this);
@@ -103,6 +119,10 @@ namespace FirstGame.Controller
 
             // Set the laser to fire every quarter second
             fireTime = TimeSpan.FromSeconds(.15f);
+            // Set the puppys to fire every .30 seconds
+            puppyTime = TimeSpan.FromSeconds(.30f);
+            // Set the freeze ray to fire every .25 seconds
+            rayTime = TimeSpan.FromSeconds(.25f);
             explosions = new List<Animation>();
             //Set player's score to zero
             score = 0;
@@ -127,18 +147,22 @@ namespace FirstGame.Controller
             bgLayer2.Initialize(Content, "Texture/bgLayer2", GraphicsDevice.Viewport.Width, -2);
             enemyTexture = Content.Load<Texture2D>("Animation/mineAnimation");
             explosionTexture = Content.Load<Texture2D>("Animation/explosion");
+
             // Load the music
             gameplayMusic = Content.Load<Song>("sound/gameMusic");
 
-            // Load the laser and explosion sound effect
+            // Load the laser and other sound effects
             laserSound = Content.Load<SoundEffect>("Sound/laserFire");
             explosionSound = Content.Load<SoundEffect>("Sound/explosion");
+            freezeFire = Content.Load< SoundEffect>("Sound/freezeFire");
+            puppyBark = Content.Load<SoundEffect>("Sound/puppyBark");
             // Load the score font
             font = Content.Load<SpriteFont>("font/gameFont");
             // Start the music right away
             PlayMusic(gameplayMusic);
             laserTexture = Content.Load<Texture2D>("Texture/laser");
             puppyTexture= Content.Load<Texture2D>("Texture/puppy");
+            freezeLazer= Content.Load<Texture2D>("Texture/freezeLaser");
             mainBackground = Content.Load<Texture2D>("Texture/mainbackground");
             Vector2 playerPosition = new Vector2(GraphicsDevice.Viewport.TitleSafeArea.X, GraphicsDevice.Viewport.TitleSafeArea.Y + GraphicsDevice.Viewport.TitleSafeArea.Height / 2);
             player.Initialize(playerAnimation, playerPosition);
@@ -199,15 +223,51 @@ namespace FirstGame.Controller
                 player.Position.Y += playerMoveSpeed;
             }
             // Fire only every interval we set as the fireTime
-            if (gameTime.TotalGameTime - previousFireTime > fireTime)
+            if (currentKeyboardState.IsKeyDown(Keys.L))
             {
-                // Reset our current time
-                previousFireTime = gameTime.TotalGameTime;
+               
+                if (gameTime.TotalGameTime - previousFireTime > fireTime)
+                {
+                    projType = projectileType.Laser;
+                    // Reset our current time
+                    previousFireTime = gameTime.TotalGameTime;
 
-                // Add the projectile, but add it to the front and center of the player
-                AddProjectile(player.Position + new Vector2(player.Width / 2, 0));
-                // Play the laser sound
-                laserSound.Play();
+                    // Add the projectile, but add it to the front and center of the player
+                    AddProjectile(player.Position + new Vector2(player.Width / 2, 0),laserTexture);
+                    // Play the laser sound
+                    laserSound.Play();
+                }
+            }
+            // Fire only every interval we set as the fireTime
+            if (currentKeyboardState.IsKeyDown(Keys.P))
+            {
+                
+                if (gameTime.TotalGameTime - previousFireTime > puppyTime)
+                {
+                    projType = projectileType.Puppy;
+                    // Reset our current time
+                    previousFireTime = gameTime.TotalGameTime;
+
+                    // Add the projectile, but add it to the front and center of the player
+                    AddProjectile(player.Position + new Vector2(player.Width / 2, 0),puppyTexture);
+                    // Play the laser sound
+                   puppyBark.Play();
+                }
+            }
+            if (currentKeyboardState.IsKeyDown(Keys.F))
+            {
+             
+                if (gameTime.TotalGameTime - previousFireTime > rayTime)
+                {
+                    projType = projectileType.Freezeray;
+                    // Reset our current time
+                    previousFireTime = gameTime.TotalGameTime;
+
+                    // Add the projectile, but add it to the front and center of the player
+                    AddProjectile(player.Position + new Vector2(player.Width / 2, 0), freezeLazer);
+                    // Play the laser sound
+                    freezeFire.Play();
+                }
             }
             // Make sure that the player does not go out of bounds
             player.Position.X = MathHelper.Clamp(player.Position.X, 0, GraphicsDevice.Viewport.Width - player.Width);
@@ -219,10 +279,10 @@ namespace FirstGame.Controller
                 score = 0;
             }
         }
-        private void AddProjectile(Vector2 position)
+        private void AddProjectile(Vector2 position,Texture2D projectileTexture)
         {
             projectile projectile = new projectile();
-            projectile.Initialize(GraphicsDevice.Viewport, laserTexture, position);
+            projectile.Initialize(GraphicsDevice.Viewport, projectileTexture, position);
             projectiles.Add(projectile);
         }
         private void UpdateProjectiles()
@@ -325,7 +385,14 @@ namespace FirstGame.Controller
                     // Determine if the two objects collided with each other
                     if (rectangle1.Intersects(rectangle2))
                     {
-                        enemies[j].Health -= projectiles[i].Damage;
+                        if (projType == projectileType.Laser || projType == projectileType.Puppy)
+                        {
+                            enemies[j].Health -= projectiles[i].Damage;
+                        }
+                        else
+                        {
+                            enemies[j].FreezeEnemy();
+                        }
                         projectiles[i].Active = false;
                     }
                 }
@@ -353,12 +420,14 @@ namespace FirstGame.Controller
                     // If not active and health <= 0
                     if (enemies[i].Health <= 0)
                     {
+
                         // Add an explosion
                         AddExplosion(enemies[i].Position);
                         // Play the explosion sound
                         explosionSound.Play();
                         //Add to the player's score
                         score += enemies[i].Value;
+
                     }
                     enemies.RemoveAt(i);
                 }

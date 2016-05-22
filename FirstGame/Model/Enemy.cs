@@ -65,7 +65,10 @@ namespace FirstGame.Model
             Value = 100;
 
         }
-
+        public void FreezeEnemy()
+        {
+            enemyMoveSpeed = 0;
+        }
 
         public void Update(GameTime gameTime)
         {
