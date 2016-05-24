@@ -148,7 +148,7 @@ namespace FirstGame.Controller
 		{
 			graphics.GraphicsDevice.Clear (Color.CornflowerBlue);
 			spriteBatch.Begin();
-			// Start drawing
+			// Start drawingçÇÇÇÇÇÇÇÇÇÇ
 			spriteBatch.Draw(mainBackground, Vector2.Zero, Color.White);
 
 			// Draw the moving background
